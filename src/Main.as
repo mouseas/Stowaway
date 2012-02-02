@@ -6,11 +6,12 @@ package
 	 * Starter class for the game.
 	 * @author Martin Carney
 	 */
-	public class Main extends FlxGame 
-	{
+	public class Main extends FlxGame {
 		
-		public function Main():void 
-		{
+		/**
+		 * Starts the program, opens an instance of PlayState.
+		 */
+		public function Main():void {
 			super(320, 240, PlayState, 2);
 		}
 		

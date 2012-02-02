@@ -8,11 +8,13 @@ package {
 	 */
 	public class PlayState extends FlxState {
 		
-		public function PlayState() {
+		/**
+		 * Constructor function.
+		 */
+		public function PlayState():void {
 			add(new FlxText(10, 10, 100, "Hello, Sol system."));
+			add(new Player());
 		}
-		
-		
 		
 	}
 	
