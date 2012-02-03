@@ -32,38 +32,46 @@ package {
 		override public function update():void {
 			super.update();
 			
-			updateKeys();
+			movementKeys();
 		}
 		
-		private function updateKeys():void {
+		private function movementKeys():void {
 			if (FlxG.keys.UP) {
 				if (FlxG.keys.LEFT) {
 					velocity.x = -diag(walkSpeed);
 					velocity.y = -diag(walkSpeed);
+					play("left");
 				} else if (FlxG.keys.RIGHT) {
 					velocity.x = diag(walkSpeed);
 					velocity.y = -diag(walkSpeed);
+					play("right");
 				} else {
 					velocity.x = 0;
 					velocity.y = -walkSpeed;
+					play("up");
 				}
 			} else if (FlxG.keys.DOWN) {
 				if (FlxG.keys.LEFT) {
 					velocity.x = -diag(walkSpeed);
 					velocity.y = diag(walkSpeed);
+					play("left");
 				} else if (FlxG.keys.RIGHT) {
 					velocity.x = diag(walkSpeed);
 					velocity.y = diag(walkSpeed);
+					play("right");
 				} else {
 					velocity.x = 0;
 					velocity.y = walkSpeed;
+					play("down");
 				}
 			} else if (FlxG.keys.LEFT) {
 				velocity.x = -walkSpeed;
 				velocity.y = 0;
+					play("left");
 			} else if (FlxG.keys.RIGHT) {
 				velocity.x = walkSpeed;
 				velocity.y = 0;
+					play("right");
 			} else {
 				velocity.x = velocity.y = 0;
 			}
