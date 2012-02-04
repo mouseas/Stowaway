@@ -18,20 +18,25 @@ package {
 		/**
 		 * Constructor function.
 		 */
-		public function Player():void {
-			super();
+		public function Player(_x:Number = 0, _y:Number = 0):void {
+			super(_x, _y);
 			loadGraphic(graphic, true);
 			addAnimation("down", [0], 10);
 			addAnimation("right", [1], 10);
 			addAnimation("up", [2], 10);
 			addAnimation("left", [3], 10);
 			
+			width = 8;
+			height = 13;
+			offset.x = 4;
+			offset.y = 2;
+			
+			
 			walkSpeed = 100;
 		}
 		
 		override public function update():void {
 			super.update();
-			
 			movementKeys();
 		}
 		
