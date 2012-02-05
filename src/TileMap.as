@@ -61,28 +61,66 @@ package {
 			}
 		}
 		
-		public var startingIndex:uint;
+		/**
+		 * Where the tiles start being opaque. Default is 1, and usually you'll want to leave it that way.
+		 */
+		public var transparentIndex:uint;
+		
+		/**
+		 * Where tiles start being drawn. Default is 1, and usually you'll want to leave it that way.
+		 */
 		public var drawIndex:uint;
+		
+		/**
+		 * Where tiles start being solid. Default is 1, but if you want floor tiles, you'll want to change this.
+		 */
 		public var solidIndex:uint;
 		
+		/**
+		 * Whether this TileMap is active on the current PlayState. If true, update() will handle visibility for the Tiles.
+		 */
+		public var gameActive:Boolean;
 		
+		/**
+		 * Constructor. Just initializes the class and sets its position. You'll need to use loadMap().
+		 * @param	X x position to place the TileMap at.
+		 * @param	Y y position to place the TileMap at.
+		 */
 		public function TileMap(X:Number = 0, Y:Number = 0):void {
 			super();
 			x = X;
 			y = Y;
-			
+			gameActive = false;
 		}
 		
-		public function loadMap(MapData:String, TileGraphic:Class, TileWidth:uint = 0, TileHeight:uint = 0, StartingIndex:uint = 0, DrawIndex:uint = 1, SolidIndex:uint = 1):TileMap {
-			// First set input variables.
-			startingIndex = StartingIndex;
-			drawIndex = DrawIndex;
-			solidIndex = SolidIndex;
-			graphic = TileGraphic;
-			
+		/**
+		 * Fills in the TileMap, generates all the tiles, 
+		 * @param	MapData CSV string containing the map's data.
+		 * @param	TileGraphic Tilemap sprite sheet graphic.
+		 * @param	TileWidth How many pixels wide each tile is.
+		 * @param	TileHeight How many pixels tall each tile is.
+		 * @param	DrawIndex Index at which tiles are visible. 1 by default.
+		 * @param	SolidIndex Index at which tiles are solid. 1 by default. Change to do floor tiles.
+		 * @param   TransparentIndex Index at which tiles start blocking line-of-sight vision. 1 by default.
+		 * @return  This
+		 */
+		public function loadMap(MapData:String, TileGraphic:Class, TileWidth:uint = 0, TileHeight:uint = 0, DrawIndex:uint = 1, SolidIndex:uint = 1, TransparentIndex:uint = 1):TileMap {
 			// Declare the iterators.
 			var i:int = 0;
 			var j:int = 0;
+			
+			// Clear out any existing Tiles before starting.
+			while (members.length > 0) {
+				remove(members[0], true);
+			}
+			if (data != null) { data = null; }
+			if (tileInstances != null) { tileInstances = null; }
+			
+			// First set input variables.
+			transparentIndex = TransparentIndex;
+			drawIndex = DrawIndex;
+			solidIndex = SolidIndex;
+			graphic = TileGraphic;
 			
 			// Prepare the data array.
 			var predata:Array = MapData.split("\n");
@@ -121,9 +159,99 @@ package {
 				}
 			}
 			
-			
 			return this;
 		}
+		
+		override public function update():void {
+			super.update();
+			
+			if (gameActive) { // Handle tile visibility.
+				updateVisibility();
+			}
+			
+		}
+		
+		public function updateVisibility():void {
+			var playerCenter:FlxPoint = FlxG.state.player.getMidpoint();
+			
+			// First set all tiles to !visible.
+			for (var i:int = 0; i < members.length; i++) {
+				var tile:Tile = members[i] as Tile;
+				tile.visible = false;
+			}
+			
+			// Then run rays from the player to each tile along the outside edge of the TileMap.
+			for (i = 0; i < tileInstances[0].length; i++) {
+				visibilityRay(playerCenter, tileInstances[0][i].getMidpoint());
+			}
+			var index:uint = tileInstances.length - 1;
+			for (i = 0; i < tileInstances[index].length; i++) {
+				visibilityRay(playerCenter, tileInstances[index][i].getMidpoint());
+			}
+		}
+		
+		private function visibilityRay(start:FlxPoint, end:FlxPoint):void {
+			trace(start.x + " " + start.y + " " + end.x + " " + end.y);
+		}
+		
+		/**
+		 * Checks all the tiles that the line segment between Start and End cross. If all of them are 
+		 * @param	Start Starting point.
+		 * @param	End Ending point.
+		 * @param   checkFor Which boolean variable to check. Use "opaque" or "solid".
+		 * @return Returns two arrays. result[0] are those that were true, and result[1] are those that were false;
+		 * result[2] is the first match of true, and result[3] is the first match of false.
+		 */
+		public function ray(Start:FlxPoint, End:FlxPoint, checkFor:String = "opaque"):Array {
+			if (Start.x == End.x) {
+				trace("Slope invalid; line is vertical!")
+			} else {
+				var result:
+				var slope:Number = (End.y - Start.y) / (End.x - Start.x);
+				var yInt:Number = Start.y - (slope * Start.x); 
+				
+				var left:Number = Math.min(Start.x, End.x);
+				var right:Number = Math.max(Start.x, End.x);
+				var top:Number = Math.min(Start.y, End.y);
+				var bottom:Number = Math.max(Start.y, End.y);
+				
+				var leftIndex:int = (int) ((left - x) / tileWidth);
+				var rightIndex:int = (int) ((right - x) / tileWidth + 1);
+				var topIndex:int = (int) ((top - y) / tileHeight);
+				var bottomIndex:int = (int) ((bottom - y) / tileHeight + 1);
+				
+				var matched:Boolean = true;
+				
+				for (var i:int = leftIndex; i < rightIndex; i++) {
+					for (var j:int = topIndex; j < bottomIndex; j++) {
+						if (i >= 0 && i < tileInstances.length && j >= 0 && j < tileInstances[i], length) {
+							var tile:Tile = tileInstances[i][j] as Tile;
+							if (tile.crossesLine(slope, yInt)) {
+								if (!tile[checkFor]) {
+									if (callback != null) {
+										callback(tile);
+									}
+									matched = false;
+								}
+							}
+						}
+					}
+				}
+				return matched;
+			}
+			return true;
+		}
+		
+		public static function blackenTile(tile:Tile):void {
+			tile.visible = false;
+			/*if (tile.explored) {
+				tile.color = 0xff333333;
+			} else {
+				tile.color = 0xff000000;
+			}*/
+		}
+		
+		
 		
 	}
 	

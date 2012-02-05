@@ -42,7 +42,7 @@ package {
 		/**
 		 * Whether the tile blocks line-of-sight. Walls, pillars, and various other things block vision for both the Player and Pirates.
 		 */
-		public var transparent:Boolean;
+		public var opaque:Boolean;
 		
 		/**
 		 * Creates a Tile object.
@@ -51,19 +51,49 @@ package {
 			parent = _parent;
 			mapX = _mapX;
 			mapY = _mapY;
-			value = _value;
 			
 			super(parent.x + (parent.tileWidth * mapX), parent.y + (parent.tileHeight * mapY));
 			
-			//Set up basic FlxSprite variables
+			loadGraphic(parent.graphic, true, false, parent.tileWidth, parent.tileHeight);
 			immovable = true;
 			moves = false;
+			
+			setType(_value);
+		}
+		
+		/**
+		 * Change a Tile's type and updates variables as needed.
+		 * @param	index
+		 */
+		public function setType(index:uint):void {
+			value = index;
+			if (parent.data[mapX][mapY] != value) {
+				parent.data[mapX][mapY] = value;
+			}
+			
 			solid = value >= parent.solidIndex;
 			visible = value >= parent.drawIndex;
+			opaque = value >= parent.transparentIndex;
+			if (opaque) { color = 0xffff8888; }
 			
-			loadGraphic(parent.graphic, true, false, parent.tileWidth, parent.tileHeight);
 			frame = value;
+		}
+		
+		/**
+		 * Determines if the Tile is crossed by a line defined by y = slope * x + yInt. Checks if it crosses the left and the right side of the rectangle.
+		 * @param	slope Slope of the line to check
+		 * @param	yInt Value of y when x = 0 for this line
+		 * @return Return whether the line crosses the Tile's rectangle.
+		 */
+		public function crossesLine(slope:Number, yInt:Number):Boolean {
+			if (x * slope + yInt >= y && x * slope + yInt <= y + height) { // Crosses left side
+				return true;
+			}
+			if ((x + width) * slope + yInt >= y && (x + width) * slope + yInt <= y + height) { // Crosses right side
+				return true;
+			}
 			
+			return false; // Crosses neither left nor right side.
 		}
 		
 	}

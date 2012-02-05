@@ -36,8 +36,10 @@ package {
 			add(tilemap);*/
 			
 			tilemap = new TileMap();
-			tilemap.loadMap(new testmapData(), tileGraphics, 16, 16);
+			tilemap.loadMap(new testmapData(), tileGraphics, 16, 16, 1, 1, 2);
 			add(tilemap);
+			
+			tilemap.ray(player.getMidpoint(), tilemap.tileInstances[10][10].getMidpoint(), TileMap.blackenTile);
 		}
 		
 		override public function update():void {
@@ -56,6 +58,7 @@ package {
 				}
 			}*/
 		}
+		
 		
 	}
 	
