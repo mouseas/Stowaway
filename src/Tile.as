@@ -45,6 +45,11 @@ package {
 		public var opaque:Boolean;
 		
 		/**
+		 * Marked as true once it's been processed for visibility rays. Reset to false each update cycle.
+		 */
+		public var processed:Boolean;
+		
+		/**
 		 * Creates a Tile object.
 		 */
 		public function Tile(_parent:TileMap, _mapX:uint, _mapY:uint, _value:uint):void {

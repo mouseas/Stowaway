@@ -165,33 +165,75 @@ package {
 		override public function update():void {
 			super.update();
 			
-			if (gameActive) { // Handle tile visibility.
+			if (gameActive && tileInstances != null) { // Handle tile visibility.
 				updateVisibility();
 			}
 			
 		}
 		
 		public function updateVisibility():void {
-			var playerCenter:FlxPoint = FlxG.state.player.getMidpoint();
+			var playerCenter:FlxPoint = (FlxG.state as PlayState).player.getMidpoint();
 			
-			// First set all tiles to !visible.
-			for (var i:int = 0; i < members.length; i++) {
-				var tile:Tile = members[i] as Tile;
-				tile.visible = false;
+			// First set all tiles to !processed and !visible.
+			for (var i:int = 0; i < tileInstances.length; i++) {
+				for (var j:int = 0; j < tileInstances[i].length; j++) {
+					(tileInstances[i][j] as Tile).processed = false;
+					(tileInstances[i][j] as Tile).visible = false;
+				}
 			}
 			
 			// Then run rays from the player to each tile along the outside edge of the TileMap.
-			for (i = 0; i < tileInstances[0].length; i++) {
+			for (i = 0; i < tileInstances[0].length; i++) { // left side
 				visibilityRay(playerCenter, tileInstances[0][i].getMidpoint());
 			}
 			var index:uint = tileInstances.length - 1;
-			for (i = 0; i < tileInstances[index].length; i++) {
+			for (i = 0; i < tileInstances[index].length; i++) { // right side
 				visibilityRay(playerCenter, tileInstances[index][i].getMidpoint());
+			}
+			index = tileInstances[0].length - 1;
+			for (i = 1; i < tileInstances.length - 1; i++) {
+				visibilityRay(playerCenter, tileInstances[i][0].getMidpoint()); // top side
+				visibilityRay(playerCenter, tileInstances[i][index].getMidpoint()); // bottom side
 			}
 		}
 		
 		private function visibilityRay(start:FlxPoint, end:FlxPoint):void {
-			trace(start.x + " " + start.y + " " + end.x + " " + end.y);
+			//var endCellX:int = (int)((end.x - x) / tileWidth);
+			//var endCellY:int = (int)((end.y - y) / tileHeight);
+			var numSteps:int = (int)(MathE.distance(start, end) / ((tileWidth + tileHeight) / 2));
+			var goOn:Boolean = checkTile(start.x, start.y);
+			var slope:Number = (end.y - start.y) / (end.x - start.x);
+			var yInt:Number = start.y - (slope * start.x); 
+			var i:int = 0;
+			var xStep:Number = (Math.pow(((tileWidth + tileHeight) / 3), 0.5) / (Math.pow(((slope * slope) + 1), 0.5)));
+			while (goOn && i < numSteps + 1) {
+				goOn = checkTile(start.x + (xStep * i), slope * (start.x + (xStep * i)) + yInt ) // PICK UP HERE - Math needed for coords along a distance down the line.
+				i++;
+			}
+			
+		}
+		
+		private function checkTile(X:Number, Y:Number):Boolean {
+			var slotX:int = (int)((X - x) / tileWidth);
+			var slotY:int = (int)((Y - y) / tileHeight);
+			if (slotX >= 0 && slotX < tileInstances.length && slotY >= 0 && slotY < tileInstances[slotX].length) {
+				var tile:Tile = tileInstances[slotX][slotY];
+				if (tile.processed) { // already been processed, next spot.
+					if (tile.opaque) {
+						return false;
+					} else {
+						return true;
+					}
+				} else { // Not prcessed yet.
+					tile.visible = tile.processed = true;
+					if (tile.opaque) {
+						return false;
+					} else {
+						return true;
+					}
+				}
+			}
+			return true;
 		}
 		
 		/**
@@ -202,11 +244,11 @@ package {
 		 * @return Returns two arrays. result[0] are those that were true, and result[1] are those that were false;
 		 * result[2] is the first match of true, and result[3] is the first match of false.
 		 */
-		public function ray(Start:FlxPoint, End:FlxPoint, checkFor:String = "opaque"):Array {
+		/*public function ray(Start:FlxPoint, End:FlxPoint, checkFor:String = "opaque"):Array {
 			if (Start.x == End.x) {
 				trace("Slope invalid; line is vertical!")
 			} else {
-				var result:
+				var result:Boolean;
 				var slope:Number = (End.y - Start.y) / (End.x - Start.x);
 				var yInt:Number = Start.y - (slope * Start.x); 
 				
@@ -240,7 +282,7 @@ package {
 				return matched;
 			}
 			return true;
-		}
+		}*/
 		
 		public static function blackenTile(tile:Tile):void {
 			tile.visible = false;

@@ -25,8 +25,6 @@ package {
 		 * Constructor function.
 		 */
 		public function PlayState():void {
-			player = new Player(26, 26);
-			add(player);
 			
 			soundManager = new SoundManager(SoundManager.sndBackgroundNoise);
 			add(soundManager);
@@ -36,10 +34,12 @@ package {
 			add(tilemap);*/
 			
 			tilemap = new TileMap();
-			tilemap.loadMap(new testmapData(), tileGraphics, 16, 16, 1, 1, 2);
+			tilemap.loadMap(new testmapData(), tileGraphics, 16, 16, 0, 1, 1);
 			add(tilemap);
+			tilemap.gameActive = true;
 			
-			tilemap.ray(player.getMidpoint(), tilemap.tileInstances[10][10].getMidpoint(), TileMap.blackenTile);
+			player = new Player(26, 26);
+			add(player);
 		}
 		
 		override public function update():void {
