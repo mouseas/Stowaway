@@ -236,18 +236,17 @@ package {
 		private function checkTile(X:Number, Y:Number, dX:Number, dY:Number):Boolean {
 			var slotX:int = (int)((X - x) / tileWidth);
 			var slotY:int = (int)((Y - y) / tileHeight);
-			var angle:Number = Math.atan2(dY, dX);
 			if (slotX >= 0 && slotX < tileInstances.length && slotY >= 0 && slotY < tileInstances[slotX].length) {
 				var tile:Tile = tileInstances[slotX][slotY];
 				if (!tile.opaque) {
-					if (angle >= -Math.PI / 2 && angle <= Math.PI / 2) checkAdjacent(slotX + 1, slotY);
-					if (angle >= -Math.PI / 4 && angle <= Math.PI * 3 / 4) checkAdjacent(slotX + 1, slotY + 1);
-					if (angle >= 0 && angle <= Math.PI) checkAdjacent(slotX, slotY + 1);
-					if ((angle >= Math.PI / 4 && angle <= Math.PI) || (angle >= -Math.PI && angle <= -Math.PI * 3 / 4)) checkAdjacent(slotX - 1, slotY + 1);
-					if ((angle >= Math.PI / 2 && angle <= Math.PI) || (angle >= -Math.PI && angle <= -Math.PI / 2)) checkAdjacent(slotX - 1, slotY);
-					if ((angle >= Math.PI * 3 / 4 && angle <= Math.PI) || (angle >= -Math.PI && angle <= -Math.PI / 4)) checkAdjacent(slotX - 1, slotY - 1);
-					if (angle >= -Math.PI && angle <= 0) checkAdjacent(slotX, slotY - 1);
-					if (angle >= -Math.PI * 3 / 4 && angle <= Math.PI / 4) checkAdjacent(slotX + 1, slotY - 1);
+					if (dX <= 0 && dY <= 0) checkAdjacent(slotX - 1, slotY - 1);
+					if (dY <= 0) checkAdjacent(slotX, slotY - 1);
+					if (dX > 0 && dY <= 0) checkAdjacent(slotX + 1, slotY - 1);
+					if (dX <= 0) checkAdjacent(slotX - 1, slotY);
+					if (dX > 0) checkAdjacent(slotX + 1, slotY);
+					if (dX <= 0 && dY > 0) checkAdjacent(slotX - 1, slotY + 1);
+					if (dY > 0) checkAdjacent(slotX, slotY + 1);
+					if (dX > 0 && dY > 0) checkAdjacent(slotX + 1, slotY + 1);
 				}
 				if (tile.processed) { // already been processed, next spot.
 					if (tile.opaque) {
