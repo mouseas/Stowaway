@@ -1,6 +1,7 @@
 package {
 	
 	import org.flixel.*;
+	import flash.geom.Point;
 	
 	/**
 	 * Tilemap for segments and floors of the Pirates' ship.
@@ -178,7 +179,7 @@ package {
 			for (var i:int = 0; i < tileInstances.length; i++) {
 				for (var j:int = 0; j < tileInstances[i].length; j++) {
 					(tileInstances[i][j] as Tile).processed = false;
-					(tileInstances[i][j] as Tile).visible = false;
+					(tileInstances[i][j] as Tile).visibleToPlayer = false;
 				}
 			}
 			
@@ -198,18 +199,21 @@ package {
 		}
 		
 		private function visibilityRay(start:FlxPoint, end:FlxPoint):void {
-			//var endCellX:int = (int)((end.x - x) / tileWidth);
-			//var endCellY:int = (int)((end.y - y) / tileHeight);
-			var numSteps:int = (int)(MathE.distance(start, end) / ((tileWidth + tileHeight) / 2));
-			var goOn:Boolean = checkTile(start.x, start.y);
-			var slope:Number = (end.y - start.y) / (end.x - start.x);
-			var yInt:Number = start.y - (slope * start.x); 
+			var dX:Number = end.x - start.x;
+			var dY:Number = end.y - start.y;
+			var c:Number = Math.sqrt(dX * dX + dY * dY); // length of line segment
+			var stepLength:Number = (tileWidth + tileHeight) / 2;
+			var numSteps:uint = (uint)(c / stepLength) + 1;
+			var startP:Point = new Point(start.x, start.y);
+			var endP:Point = new Point(end.x, end.y);
+			var goOn:Boolean = true;
 			var i:int = 0;
-			var xStep:Number = (Math.pow(((tileWidth + tileHeight) / 3), 0.5) / (Math.pow(((slope * slope) + 1), 0.5)));
-			while (goOn && i < numSteps + 1) {
-				goOn = checkTile(start.x + (xStep * i), slope * (start.x + (xStep * i)) + yInt ) // PICK UP HERE - Math needed for coords along a distance down the line.
+			while (goOn && i < numSteps) {
+				var point:Point = Point.interpolate(endP, startP, (i * stepLength) / c);
+				goOn = checkTile(point.x, point.y);
 				i++;
 			}
+			
 			
 		}
 		
@@ -224,16 +228,34 @@ package {
 					} else {
 						return true;
 					}
-				} else { // Not prcessed yet.
-					tile.visible = tile.processed = true;
+				} else { // Not processed yet.
+					tile.processed = true;
 					if (tile.opaque) {
 						return false;
 					} else {
+						tile.visibleToPlayer = true;
+						checkAdjacent(slotX - 1, slotY - 1);
+						checkAdjacent(slotX, slotY - 1);
+						checkAdjacent(slotX + 1, slotY - 1);
+						checkAdjacent(slotX - 1, slotY);
+						checkAdjacent(slotX + 1, slotY);
+						checkAdjacent(slotX - 1, slotY + 1);
+						checkAdjacent(slotX, slotY + 1);
+						checkAdjacent(slotX + 1, slotY + 1);
 						return true;
 					}
 				}
 			}
 			return true;
+		}
+		
+		private function checkAdjacent(slotX:int, slotY:int):void {
+			if (slotX >= 0 && slotX < tileInstances.length && slotY >= 0 && slotY < tileInstances[slotX].length) {
+				var tile:Tile = tileInstances[slotX][slotY];
+				if (tile.opaque && !tile.visibleToPlayer) {
+					tile.visibleToPlayer = true;
+				}
+			}
 		}
 		
 		/**

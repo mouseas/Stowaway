@@ -32,7 +32,7 @@ package {
 			offset.y = 2;
 			
 			
-			walkSpeed = 100;
+			walkSpeed = 70;
 		}
 		
 		override public function update():void {

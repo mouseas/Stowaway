@@ -63,6 +63,8 @@ package {
 			immovable = true;
 			moves = false;
 			
+			explored = false;
+			
 			setType(_value);
 		}
 		
@@ -79,7 +81,6 @@ package {
 			solid = value >= parent.solidIndex;
 			visible = value >= parent.drawIndex;
 			opaque = value >= parent.transparentIndex;
-			if (opaque) { color = 0xffff8888; }
 			
 			frame = value;
 		}
@@ -99,6 +100,33 @@ package {
 			}
 			
 			return false; // Crosses neither left nor right side.
+		}
+		
+		override public function update():void {
+			if (visibleToPlayer) {
+				if (!visible) {
+					visible = true;
+				}
+				if (!explored) {
+					explored = true;
+					alpha = 0.5;
+				}
+				if (alpha != 1) {
+					alpha += FlxG.elapsed;
+				}
+			} else {
+				if (explored) {
+					if (alpha > 0.5) {
+						alpha -= FlxG.elapsed;
+					}
+				} else {
+					if (visible) {
+						visible = false;
+					}
+				}
+				
+			}
+			super.update();
 		}
 		
 	}

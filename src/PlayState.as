@@ -22,9 +22,15 @@ package {
 		public var player:Player;
 		
 		/**
+		 * Stuff to init after the first update() cycle is triggered by this stuff.
+		 */
+		public var init:Boolean;
+		
+		/**
 		 * Constructor function.
 		 */
 		public function PlayState():void {
+			init = false;
 			
 			soundManager = new SoundManager(SoundManager.sndBackgroundNoise);
 			add(soundManager);
@@ -38,12 +44,17 @@ package {
 			add(tilemap);
 			tilemap.gameActive = true;
 			
+			
 			player = new Player(26, 26);
 			add(player);
 		}
 		
 		override public function update():void {
 			super.update();
+			if (!init) {
+				FlxG.camera.follow(player);
+				init = true;
+			}
 			FlxG.collide(player, tilemap);
 			
 			//Deal with visibility
