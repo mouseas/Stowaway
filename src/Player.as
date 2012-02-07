@@ -26,10 +26,10 @@ package {
 			addAnimation("up", [2], 10);
 			addAnimation("left", [3], 10);
 			
-			width = 8;
-			height = 13;
-			offset.x = 4;
-			offset.y = 2;
+			width = 8; //8
+			height = 13; //13
+			offset.x = 4; //4
+			offset.y = 2; //2
 			
 			
 			walkSpeed = 70;

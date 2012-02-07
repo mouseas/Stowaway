@@ -109,14 +109,14 @@ package {
 				}
 				if (!explored) {
 					explored = true;
-					alpha = 0.5;
+					alpha = 0.25;
 				}
 				if (alpha != 1) {
 					alpha += FlxG.elapsed;
 				}
 			} else {
 				if (explored) {
-					if (alpha > 0.5) {
+					if (alpha > 0.25) {
 						alpha -= FlxG.elapsed;
 					}
 				} else {

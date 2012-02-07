@@ -172,6 +172,9 @@ package {
 			
 		}
 		
+		/**
+		 * Part of the tilemap's update cycle. Marks blocks within the player's line of sight as visibleToPlayer.
+		 */
 		public function updateVisibility():void {
 			var playerCenter:FlxPoint = (FlxG.state as PlayState).player.getMidpoint();
 			
@@ -198,11 +201,17 @@ package {
 			}
 		}
 		
+		/**
+		 * Individual ray from the player to one of the edge blocks of a tilemap. Processes through tiles along the path and checks if
+		 * they're opaque. Stops when it runs into an opaque block.
+		 * @param	start
+		 * @param	end
+		 */
 		private function visibilityRay(start:FlxPoint, end:FlxPoint):void {
 			var dX:Number = end.x - start.x;
 			var dY:Number = end.y - start.y;
 			var c:Number = Math.sqrt(dX * dX + dY * dY); // length of line segment
-			var stepLength:Number = (tileWidth + tileHeight) / 2;
+			var stepLength:Number = (tileWidth + tileHeight) / 3;
 			var numSteps:uint = (uint)(c / stepLength) + 1;
 			var startP:Point = new Point(start.x, start.y);
 			var endP:Point = new Point(end.x, end.y);
@@ -210,18 +219,36 @@ package {
 			var i:int = 0;
 			while (goOn && i < numSteps) {
 				var point:Point = Point.interpolate(endP, startP, (i * stepLength) / c);
-				goOn = checkTile(point.x, point.y);
+				goOn = checkTile(point.x, point.y, dX, dY);
 				i++;
 			}
 			
 			
 		}
 		
-		private function checkTile(X:Number, Y:Number):Boolean {
+		/**
+		 * Check an individual tile - if it exists, then if it's been processed, then if it's opaque. If it's !opague,
+		 * check all the adjacent tiles for opaque.
+		 * @param	X
+		 * @param	Y
+		 * @return
+		 */
+		private function checkTile(X:Number, Y:Number, dX:Number, dY:Number):Boolean {
 			var slotX:int = (int)((X - x) / tileWidth);
 			var slotY:int = (int)((Y - y) / tileHeight);
+			var angle:Number = Math.atan2(dY, dX);
 			if (slotX >= 0 && slotX < tileInstances.length && slotY >= 0 && slotY < tileInstances[slotX].length) {
 				var tile:Tile = tileInstances[slotX][slotY];
+				if (!tile.opaque) {
+					if (angle >= -Math.PI / 2 && angle <= Math.PI / 2) checkAdjacent(slotX + 1, slotY);
+					if (angle >= -Math.PI / 4 && angle <= Math.PI * 3 / 4) checkAdjacent(slotX + 1, slotY + 1);
+					if (angle >= 0 && angle <= Math.PI) checkAdjacent(slotX, slotY + 1);
+					if ((angle >= Math.PI / 4 && angle <= Math.PI) || (angle >= -Math.PI && angle <= -Math.PI * 3 / 4)) checkAdjacent(slotX - 1, slotY + 1);
+					if ((angle >= Math.PI / 2 && angle <= Math.PI) || (angle >= -Math.PI && angle <= -Math.PI / 2)) checkAdjacent(slotX - 1, slotY);
+					if ((angle >= Math.PI * 3 / 4 && angle <= Math.PI) || (angle >= -Math.PI && angle <= -Math.PI / 4)) checkAdjacent(slotX - 1, slotY - 1);
+					if (angle >= -Math.PI && angle <= 0) checkAdjacent(slotX, slotY - 1);
+					if (angle >= -Math.PI * 3 / 4 && angle <= Math.PI / 4) checkAdjacent(slotX + 1, slotY - 1);
+				}
 				if (tile.processed) { // already been processed, next spot.
 					if (tile.opaque) {
 						return false;
@@ -234,14 +261,6 @@ package {
 						return false;
 					} else {
 						tile.visibleToPlayer = true;
-						checkAdjacent(slotX - 1, slotY - 1);
-						checkAdjacent(slotX, slotY - 1);
-						checkAdjacent(slotX + 1, slotY - 1);
-						checkAdjacent(slotX - 1, slotY);
-						checkAdjacent(slotX + 1, slotY);
-						checkAdjacent(slotX - 1, slotY + 1);
-						checkAdjacent(slotX, slotY + 1);
-						checkAdjacent(slotX + 1, slotY + 1);
 						return true;
 					}
 				}
@@ -249,6 +268,11 @@ package {
 			return true;
 		}
 		
+		/**
+		 * Check a tile adjacent to a !opaque tile to see if it's opaque. If opaque, set visibleToPlayer.
+		 * @param	slotX
+		 * @param	slotY
+		 */
 		private function checkAdjacent(slotX:int, slotY:int):void {
 			if (slotX >= 0 && slotX < tileInstances.length && slotY >= 0 && slotY < tileInstances[slotX].length) {
 				var tile:Tile = tileInstances[slotX][slotY];
