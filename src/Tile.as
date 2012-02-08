@@ -102,6 +102,11 @@ package {
 			return false; // Crosses neither left nor right side.
 		}
 		
+		public function updatePos():void {
+			x = parent.x + (parent.tileWidth * mapX);
+			y = parent.y + (parent.tileHeight * mapY);
+		}
+		
 		override public function update():void {
 			if (visibleToPlayer) {
 				if (!visible) {

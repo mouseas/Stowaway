@@ -29,6 +29,8 @@ package {
 		 */
 		public var tileWidth:uint;
 		
+		public var allTiles:FlxGroup;
+		
 		/**
 		 * 2D Array holding the individual tiles with their x and y placements in the map.
 		 */
@@ -42,7 +44,7 @@ package {
 				for (var i:int = 0; i < tileInstances.length; i++) {
 					for (var j:int = 0; j < tileInstances[i].length; j++) {
 						var tile:Tile = tileInstances[i][j];
-						tile.x = _x + (i * tileWidth);
+						tile.updatePos();
 					}
 				}
 			}
@@ -56,7 +58,7 @@ package {
 				for (var i:int = 0; i < tileInstances.length; i++) {
 					for (var j:int = 0; j < tileInstances[i].length; j++) {
 						var tile:Tile = tileInstances[i][j];
-						tile.y = _y + (j * tileHeight);
+						tile.updatePos();
 					}
 				}
 			}
@@ -111,9 +113,9 @@ package {
 			var j:int = 0;
 			
 			// Clear out any existing Tiles before starting.
-			while (members.length > 0) {
+			/*while (members.length > 0) {
 				remove(members[0], true);
-			}
+			}*/
 			if (data != null) { data = null; }
 			if (tileInstances != null) { tileInstances = null; }
 			
@@ -163,6 +165,9 @@ package {
 			return this;
 		}
 		
+		/**
+		 * Update cycle for the TileMap.
+		 */
 		override public function update():void {
 			super.update();
 			
@@ -187,17 +192,25 @@ package {
 			}
 			
 			// Then run rays from the player to each tile along the outside edge of the TileMap.
-			for (i = 0; i < tileInstances[0].length; i++) { // left side
-				visibilityRay(playerCenter, tileInstances[0][i].getMidpoint());
+			// Need to change this to a series of points outside the edge of the screen.
+			var point:FlxPoint = new FlxPoint();
+			for (i = 0; i < FlxG.width / (tileWidth * 0.8); i++) {
+				// top side
+				point.x = FlxG.camera.scroll.x + (i * tileWidth * 0.8);
+				point.y = FlxG.camera.scroll.y;
+				visibilityRay(playerCenter, point);
+				// bottom side
+				point.y = FlxG.camera.scroll.y + FlxG.height;
+				visibilityRay(playerCenter, point);
 			}
-			var index:uint = tileInstances.length - 1;
-			for (i = 0; i < tileInstances[index].length; i++) { // right side
-				visibilityRay(playerCenter, tileInstances[index][i].getMidpoint());
-			}
-			index = tileInstances[0].length - 1;
-			for (i = 1; i < tileInstances.length - 1; i++) {
-				visibilityRay(playerCenter, tileInstances[i][0].getMidpoint()); // top side
-				visibilityRay(playerCenter, tileInstances[i][index].getMidpoint()); // bottom side
+			for (i = 0; i < FlxG.height / (tileHeight * 0.8); i++) {
+				// left side
+				point.x = FlxG.camera.scroll.x;
+				point.y = FlxG.camera.scroll.y + (i * tileHeight * 0.8);
+				visibilityRay(playerCenter, point);
+				// right side
+				point.x = FlxG.camera.scroll.x + FlxG.width;
+				visibilityRay(playerCenter, point);
 			}
 		}
 		
@@ -280,64 +293,6 @@ package {
 				}
 			}
 		}
-		
-		/**
-		 * Checks all the tiles that the line segment between Start and End cross. If all of them are 
-		 * @param	Start Starting point.
-		 * @param	End Ending point.
-		 * @param   checkFor Which boolean variable to check. Use "opaque" or "solid".
-		 * @return Returns two arrays. result[0] are those that were true, and result[1] are those that were false;
-		 * result[2] is the first match of true, and result[3] is the first match of false.
-		 */
-		/*public function ray(Start:FlxPoint, End:FlxPoint, checkFor:String = "opaque"):Array {
-			if (Start.x == End.x) {
-				trace("Slope invalid; line is vertical!")
-			} else {
-				var result:Boolean;
-				var slope:Number = (End.y - Start.y) / (End.x - Start.x);
-				var yInt:Number = Start.y - (slope * Start.x); 
-				
-				var left:Number = Math.min(Start.x, End.x);
-				var right:Number = Math.max(Start.x, End.x);
-				var top:Number = Math.min(Start.y, End.y);
-				var bottom:Number = Math.max(Start.y, End.y);
-				
-				var leftIndex:int = (int) ((left - x) / tileWidth);
-				var rightIndex:int = (int) ((right - x) / tileWidth + 1);
-				var topIndex:int = (int) ((top - y) / tileHeight);
-				var bottomIndex:int = (int) ((bottom - y) / tileHeight + 1);
-				
-				var matched:Boolean = true;
-				
-				for (var i:int = leftIndex; i < rightIndex; i++) {
-					for (var j:int = topIndex; j < bottomIndex; j++) {
-						if (i >= 0 && i < tileInstances.length && j >= 0 && j < tileInstances[i], length) {
-							var tile:Tile = tileInstances[i][j] as Tile;
-							if (tile.crossesLine(slope, yInt)) {
-								if (!tile[checkFor]) {
-									if (callback != null) {
-										callback(tile);
-									}
-									matched = false;
-								}
-							}
-						}
-					}
-				}
-				return matched;
-			}
-			return true;
-		}*/
-		
-		public static function blackenTile(tile:Tile):void {
-			tile.visible = false;
-			/*if (tile.explored) {
-				tile.color = 0xff333333;
-			} else {
-				tile.color = 0xff000000;
-			}*/
-		}
-		
 		
 		
 	}
