@@ -12,14 +12,62 @@ package {
 	 */
 	public class PlayState extends FlxState {
 		
-		public var soundManager:SoundManager;
+		// ####################### Graphic and map data files #####################
 		
 		[Embed(source = "../lib/tilemaps/testmap.csv", mimeType = "application/octet-stream")] public var testmapData:Class;
 		[Embed(source = "../lib/placeholder-tiles.png")] public var tileGraphics:Class;
 		
-		public var tilemap:TileMap;
+		// ####################### Visual Layers ########################
 		
+		/**
+		 * Top-most layer, used for indicators like the footsteps of hidden pirates.
+		 */
+		public var footstepLyr:FlxGroup;
+		
+		/**
+		 * Layer used for the Player and not much else.
+		 */
+		public var playerLyr:FlxGroup;
+		
+		/**
+		 * Layer used for the vents' Mirk tilemap(s).
+		 */
+		public var ventExploredLyr:FlxGroup;
+		
+		/**
+		 * Layer used for various objects in the vents.
+		 */
+		public var ventSpriteLayer:FlxGroup;
+		
+		/**
+		 * Layer used for the vent tilemap(s).
+		 */
+		public var ventTileLyr:FlxGroup;
+		
+		/**
+		 * Layer used for the Decks' mirk tilemaps.
+		 */
+		public var deckExploredLyr:FlxGroup;
+		
+		/**
+		 * Layer used for pirates and various objects on a given deck.
+		 */
+		public var deckSpriteLyr:FlxGroup;
+		
+		/**
+		 * Layer used for the Decks' tilemaps.
+		 */
+		public var deckTileLyr:FlxGroup;
+		
+		// ###################### Collision Groups ##################################
+		
+		/**
+		 * The player object. Technically not a group, but used the same way.
+		 */
 		public var player:Player;
+		
+		
+		// ############################### Misc Variables #################################
 		
 		/**
 		 * Stuff to init after the first update() cycle is triggered by this stuff.
@@ -28,6 +76,12 @@ package {
 		
 		public var debug1:FlxText;
 		public var debug2:FlxText;
+		
+		public var tilemap:TileMap;
+		
+		public var soundManager:SoundManager;
+		
+		// ############################## Functions ##################################
 		
 		/**
 		 * Constructor function.
