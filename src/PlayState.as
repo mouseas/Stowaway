@@ -81,6 +81,8 @@ package {
 		
 		public var soundManager:SoundManager;
 		
+		public var saveGame:FlxSave;
+		
 		// ############################## Functions ##################################
 		
 		/**
@@ -88,6 +90,10 @@ package {
 		 */
 		public function PlayState():void {
 			init = false;
+			
+			// First thing's first, load / create the save object.
+			saveGame = new FlxSave();
+			saveGame.bind("StowawaySave");
 			
 			soundManager = new SoundManager(SoundManager.sndBackgroundNoise);
 			add(soundManager);
@@ -102,7 +108,11 @@ package {
 			tilemap.gameActive = true;
 			//tilemap.x = 100;
 			
-			player = new Player(26, 26);
+			if (saveGame.data.player == null) {
+				player = new Player(26, 26);
+			} else {
+				player = new Player(saveGame.data.player.x, saveGame.data.player.y);
+			}
 			add(player);
 			
 			debug1 = new FlxText(10, 10, 150, "debug1");
@@ -126,6 +136,11 @@ package {
 				FlxG.worldBounds.y = -1000;
 				FlxG.worldBounds.width = 5000;
 				FlxG.worldBounds.height = 5000;
+				
+			}
+			if (FlxG.keys.justPressed("O")) { //save game
+				saveGame.data.player = player;
+				player.flicker(0.25);
 			}
 			FlxG.collide(player, tilemap);
 			

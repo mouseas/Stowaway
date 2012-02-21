@@ -4,6 +4,8 @@ package {
 	
 	public class Deck extends FlxObject {
 		
+		[Embed(source = "../lib/mirk.png")]public var mirkGraphic:Class;
+		
 		/**
 		 * How many pixels wide each tile is.
 		 */
@@ -81,20 +83,33 @@ package {
 		public var heightInTiles:uint;
 		
 		/**
+		 * Reference to the parent PlayState object.
+		 */
+		public var parent:PlayState;
+		
+		/**
 		 * Constructor for a Deck object. Doesn't do much - You need to use loadDeck.
+		 * Add the Deck object for line of sight updating, and use addDeck(state:PlayState) to add the deck's parts to gameplay.
 		 */
 		public function Deck():void {
 			super();
+			
 		}
 		
 		/**
 		 * Loads and prepares a Deck.
-		 * @param	tileData The CSV text file with the TileMap's layout.
+		 * @param	tileData The CSV text string with the TileMap's layout.
 		 * @param	tileGrahics The graphic file used for the tiles
 		 * @param   exploredData If loading a previously explored Deck (eg from a saved game), this is what has already been explored.
-		 * @param	lightingData If the area has dimly lit areas, this is the CSV text file with the lighting layout.
+		 * @param	lightingData If the area has dimly lit areas, this is the CSV text string with the lighting layout.
 		 */
-		public function loadDeck(tileData:Class, tileGrahics:Class, exploredData:String = null, lightingData:Class = null):void {
+		public function loadDeck(tileData:String, tileGrahics:Class, exploredData:String = null, lightingData:String = null, StartingIndex:uint=0, DrawIndex:uint=1, CollideIndex:uint=1):void {
+			if (tileData == null || tileGrahics == null) {
+				trace ("Inputs for loadDeck contained null data.")
+				return;
+			}
+			tilesMap = new FlxTilemap();
+			tilesMap.loadMap(tileData, tileGrahics, 0, 0, 0, StartingIndex, DrawIndex, CollideIndex);
 			
 		}
 		
