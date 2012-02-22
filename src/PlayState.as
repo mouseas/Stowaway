@@ -59,6 +59,11 @@ package {
 		 */
 		public var deckTileLyr:FlxGroup;
 		
+		/**
+		 * Not really a visible layer. Add non-visible objects such as Decks here to have them update().
+		 */
+		public var backgroundProcessingLyr:FlxGroup;
+		
 		// ###################### Collision Groups ##################################
 		
 		/**
@@ -97,6 +102,27 @@ package {
 			
 			soundManager = new SoundManager(SoundManager.sndBackgroundNoise);
 			add(soundManager);
+			
+			// Initialize and add all the layers
+			
+			footstepLyr = new FlxGroup();
+			add(footstepLyr);
+			playerLyr = new FlxGroup();
+			add(playerLyr);
+			ventExploredLyr = new FlxGroup();
+			add(ventExploredLyr);
+			ventSpriteLayer = new FlxGroup();
+			add(ventSpriteLayer);
+			ventTileLyr = new FlxGroup();
+			add(ventTileLyr);
+			deckExploredLyr = new FlxGroup();
+			add(deckExploredLyr);
+			deckSpriteLyr = new FlxGroup();
+			add(deckSpriteLyr);
+			deckTileLyr = new FlxGroup();
+			add(deckTileLyr);
+			
+			// And other stuff...
 			
 			/*tilemap = new FlxTilemap();
 			tilemap.loadMap(new testmapData(), tileGraphics, 16, 16);

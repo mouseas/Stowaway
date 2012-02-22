@@ -18,12 +18,17 @@ package {
 		
 		/**
 		 * 2D Array of each tiles' opacity; whether each tile can be seen through. Used for line-of-sight calculations.
-		 * 0 is opaque, 1 is transparent.
+		 * True for opaque (blocks line of sight), false for transparent.
 		 */
 		public var tilesOpacity:Array;
 		
 		/**
-		 * 2D array of which tiles have been explored (1) and which have not (0).
+		 * What tile index to start having tiles block line of sight.
+		 */
+		public var opacityIndex:uint;
+		
+		/**
+		 * 2D array of which tiles have been explored (true) and which have not (false).
 		 */
 		public var tilesExplored:Array;
 		
@@ -90,10 +95,13 @@ package {
 		/**
 		 * Constructor for a Deck object. Doesn't do much - You need to use loadDeck.
 		 * Add the Deck object for line of sight updating, and use addDeck(state:PlayState) to add the deck's parts to gameplay.
+		 * @param deckNumber Which deck this is. This is the Deck's ID, and is used to save and load deck data.
 		 */
-		public function Deck():void {
+		public function Deck(deckNumber:uint):void {
 			super();
-			
+			ID = deckNumber;
+			_x = 0;
+			_y = 0;
 		}
 		
 		/**
@@ -103,7 +111,7 @@ package {
 		 * @param   exploredData If loading a previously explored Deck (eg from a saved game), this is what has already been explored.
 		 * @param	lightingData If the area has dimly lit areas, this is the CSV text string with the lighting layout.
 		 */
-		public function loadDeck(tileData:String, tileGrahics:Class, exploredData:String = null, lightingData:String = null, StartingIndex:uint=0, DrawIndex:uint=1, CollideIndex:uint=1):void {
+		public function loadDeck(tileData:String, tileGrahics:Class, exploredData:String = null, lightingData:String = null, StartingIndex:uint=0, DrawIndex:uint=1, CollideIndex:uint=1, OpaqueIndex:uint=1):void {
 			if (tileData == null || tileGrahics == null) {
 				trace ("Inputs for loadDeck contained null data.")
 				return;
@@ -111,6 +119,85 @@ package {
 			tilesMap = new FlxTilemap();
 			tilesMap.loadMap(tileData, tileGrahics, 0, 0, 0, StartingIndex, DrawIndex, CollideIndex);
 			
+			widthInTiles = tilesMap.widthInTiles;
+			heightInTiles = tilesMap.heightInTiles;
+			tileWidth = (int)(tilesMap.width / tilesMap.widthInTiles);
+			tileHeight = (int)(tilesMap.height / tilesMap.heightInTiles);
+			opacityIndex = OpaqueIndex;
+			
+			// Creates a grid of 0's sized to match the tilesMap to generate tilesMirk.
+			var mirkString:String = "";
+			for (var i:int = 0; i < widthInTiles; i++) {
+				for (var j:int = 0; j < heightInTiles; j++) {
+					mirkString += "0";
+					if (j - 1 < heightInTiles) {
+						mirkString += ",";
+					} else {
+						mirkString += "\n";
+					}
+				}
+			}
+			
+			tilesMirk = new FlxTilemap();
+			tilesMirk.loadMap(mirkString, mirkGraphic, tileWidth, tileHeight);
+			
+			// Figure out each tile's opacity (if it blocks line of sight or not).
+			tilesOpacity = createGrid(widthInTiles, heightInTiles);
+			for (i = 0; i < widthInTiles; i++) {
+				for (j = 0; j < heightInTiles; j++) {
+					if (tilesMap.getTile(i, j) >= opacityIndex) {
+						tilesOpacity[i][j] = true;
+					} else {
+						tilesOpacity[i][j] = false;
+					}
+				}
+			}
+			
+			
+			tilesExplored = createGrid(widthInTiles, heightInTiles);
+			tilesCurrVisible = createGrid(widthInTiles, heightInTiles);
+			if (parent.saveGame.data.deck[ID] != null) {
+				// Load save game explored data, and set all CurrVisible to false (changes at update).
+			} else {
+				// New game, nothing explored yet.
+				for (i = 0; i < widthInTiles; i++) {
+					for (j = 0; j < heightInTiles; j++) {
+						tilesExplored[i][j] = false;
+						tilesCurrVisible[i][j] = false;
+					}
+				}
+			}
+			
+			
+			// Load the lighting if there is any data to load. Can cause errors if the lighting data is too small.
+			if (lightingData != null) {
+				tilesLighting = createGrid(widthInTiles, heightInTiles);
+				var lightArray:Array = lightingData.split("\n");
+				for (i = 0; i < lightArray.length; i++) {
+					lightArray[i] = (String)(lightArray[i]).split(",");
+				}
+				for (i = 0; i < tilesLighting.length; i++) {
+					for (j = 0; j < tilesLighting[i].length && j < lightArray.length && i < lightArray[j].length; j++) {
+						tilesLighting[i][j] = lightArray[j][i]; // Note that lightArray is flipped for tilesLighting.
+					}
+				}
+			}
+		}
+		
+		/**
+		 * Creates a 2D array with empty cells in a grid. result[x][y] for each cell.
+		 * @param	width How many columns in the grid.
+		 * @param	height How many cells in each column, ie how many rows in the grid.
+		 * @return Array object full of Array objects with empty cells.
+		 */
+		public static function createGrid(width:uint, height:uint):Array {
+			var result:Array = new Array;
+			for (var i:int = 0; i < width; i++) {
+				var column:Array = new Array();
+				result.push(column);
+				column.length = height;
+			}
+			return result;
 		}
 		
 		override public function update():void {
