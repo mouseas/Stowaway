@@ -83,6 +83,7 @@ package {
 		public var debug2:FlxText;
 		
 		public var tilemap:TileMap;
+		public var testDeck:Deck;
 		
 		public var soundManager:SoundManager;
 		
@@ -105,57 +106,60 @@ package {
 			
 			// Initialize and add all the layers
 			
-			footstepLyr = new FlxGroup();
-			add(footstepLyr);
-			playerLyr = new FlxGroup();
-			add(playerLyr);
-			ventExploredLyr = new FlxGroup();
-			add(ventExploredLyr);
-			ventSpriteLayer = new FlxGroup();
-			add(ventSpriteLayer);
-			ventTileLyr = new FlxGroup();
-			add(ventTileLyr);
-			deckExploredLyr = new FlxGroup();
-			add(deckExploredLyr);
-			deckSpriteLyr = new FlxGroup();
-			add(deckSpriteLyr);
 			deckTileLyr = new FlxGroup();
 			add(deckTileLyr);
+			deckSpriteLyr = new FlxGroup();
+			add(deckSpriteLyr);
+			deckExploredLyr = new FlxGroup();
+			add(deckExploredLyr);
+			ventTileLyr = new FlxGroup();
+			add(ventTileLyr);
+			ventSpriteLayer = new FlxGroup();
+			add(ventSpriteLayer);
+			ventExploredLyr = new FlxGroup();
+			add(ventExploredLyr);
+			playerLyr = new FlxGroup();
+			add(playerLyr);
+			footstepLyr = new FlxGroup();
+			add(footstepLyr);
+			backgroundProcessingLyr = new FlxGroup();
+			add(backgroundProcessingLyr);
 			
 			// And other stuff...
 			
-			/*tilemap = new FlxTilemap();
-			tilemap.loadMap(new testmapData(), tileGraphics, 16, 16);
-			add(tilemap);*/
+			//tilemap = new TileMap(0, 0);
+			//tilemap.loadMap(new testmapData(), tileGraphics, 16, 16, 0, 1, 1);
+			//add(tilemap);
+			//tilemap.gameActive = true;
 			
-			tilemap = new TileMap(0, 0);
-			tilemap.loadMap(new testmapData(), tileGraphics, 16, 16, 0, 1, 1);
-			add(tilemap);
-			tilemap.gameActive = true;
-			//tilemap.x = 100;
+			testDeck = new Deck(0, this);
+			testDeck.loadDeck(new testmapData(), tileGraphics, null, 0, 0, 1, 1);
 			
 			if (saveGame.data.player == null) {
 				player = new Player(26, 26);
 			} else {
 				player = new Player(saveGame.data.player.x, saveGame.data.player.y);
 			}
-			add(player);
+			playerLyr.add(player);
 			
-			debug1 = new FlxText(10, 10, 150, "debug1");
+			debug1 = new FlxText(10, 10, 150, "");
 			debug1.scrollFactor.x = debug1.scrollFactor.y = 0;
-			debug1.alpha = 0.3;
+			debug1.alpha = 0.5;
+			debug1.color = 0xffffaaaa;
 			add(debug1);
-			debug2 = new FlxText(10, 23, 150, "debug2");
+			debug2 = new FlxText(10, 23, 150, "");
 			debug2.scrollFactor.x = debug2.scrollFactor.y = 0;
-			debug2.alpha = 0.3;
+			debug2.alpha = 0.5;
+			debug2.color = 0xffffaaaa;
 			add(debug2);
 		}
 		
 		override public function update():void {
 			super.update();
-			debug1.text = "" + Math.round(FlxG.camera.scroll.x);
-			debug2.text = "" + Math.round(FlxG.camera.scroll.y);
+			//debug1.text = "" + Math.round(FlxG.camera.scroll.x);
+			//debug2.text = "" + Math.round(FlxG.camera.scroll.y);
 			if (!init) {
+				testDeck.addToState(this);
 				FlxG.camera.follow(player);
 				init = true;
 				FlxG.worldBounds.x = -1000;
@@ -168,7 +172,7 @@ package {
 				saveGame.data.player = player;
 				player.flicker(0.25);
 			}
-			FlxG.collide(player, tilemap);
+			FlxG.collide(player, deckTileLyr);
 			
 			//Deal with visibility
 			/*var tiles:Array = tilemap.tileObjects;

@@ -1,8 +1,9 @@
 package {
 	
 	import org.flixel.*;
+	import flash.geom.Point;
 	
-	public class Deck extends FlxObject {
+	public class Deck extends FlxBasic {
 		
 		[Embed(source = "../lib/mirk.png")]public var mirkGraphic:Class;
 		
@@ -38,6 +39,11 @@ package {
 		public var tilesCurrVisible:Array;
 		
 		/**
+		 * 2D Array of which tiles have had their visibility processed each update cycle.
+		 */
+		public var tilesProcessed:Array;
+		
+		/**
 		 * Optional 2D array of the Deck's lighting. Create and use this only if the Deck has dark areas. Values range from 0 (black) to 9 (fully lit).
 		 */
         public var tilesLighting:Array
@@ -52,6 +58,16 @@ package {
 		 * Tiles range from 0 (black) to 9 (clear).
 		 */
 		public var tilesMirk:FlxTilemap;
+		
+		/**
+		 * Whether the Deck has been loaded/initialized.
+		 */
+		public var initialized:Boolean;
+		
+		/**
+		 * The sprites that belong on this deck, including Pirates, projectiles, and various objects to interact with.
+		 */
+		public var sprites:FlxGroup;
 		
 		/**
 		 * The x position of the Deck.
@@ -97,21 +113,27 @@ package {
 		 * Add the Deck object for line of sight updating, and use addDeck(state:PlayState) to add the deck's parts to gameplay.
 		 * @param deckNumber Which deck this is. This is the Deck's ID, and is used to save and load deck data.
 		 */
-		public function Deck(deckNumber:uint):void {
+		public function Deck(deckNumber:uint, _parent:PlayState):void {
 			super();
 			ID = deckNumber;
 			_x = 0;
 			_y = 0;
+			initialized = false;
+			parent = _parent;
+			sprites = new FlxGroup();
 		}
 		
 		/**
 		 * Loads and prepares a Deck.
 		 * @param	tileData The CSV text string with the TileMap's layout.
 		 * @param	tileGrahics The graphic file used for the tiles
-		 * @param   exploredData If loading a previously explored Deck (eg from a saved game), this is what has already been explored.
 		 * @param	lightingData If the area has dimly lit areas, this is the CSV text string with the lighting layout.
+		 * @param   StartingIndex Index of the first frame to use. Default is 0.
+		 * @param   DrawIndex Index Index of the first frame to use graphics. Default is 0.
+		 * @param   CollideIndex Index of tiles to start colliding with. Default is 1. This will usually be changed.
+		 * @param   OpaqueIndex Index of tiles to start blocking line of sight. Default is 1. Usually this will match CollideIndex.
 		 */
-		public function loadDeck(tileData:String, tileGrahics:Class, exploredData:String = null, lightingData:String = null, StartingIndex:uint=0, DrawIndex:uint=1, CollideIndex:uint=1, OpaqueIndex:uint=1):void {
+		public function loadDeck(tileData:String, tileGrahics:Class, lightingData:String = null, StartingIndex:uint=0, DrawIndex:uint=0, CollideIndex:uint=1, OpaqueIndex:uint=1):void {
 			if (tileData == null || tileGrahics == null) {
 				trace ("Inputs for loadDeck contained null data.")
 				return;
@@ -127,17 +149,18 @@ package {
 			
 			// Creates a grid of 0's sized to match the tilesMap to generate tilesMirk.
 			var mirkString:String = "";
-			for (var i:int = 0; i < widthInTiles; i++) {
-				for (var j:int = 0; j < heightInTiles; j++) {
+			for (var i:int = 0; i < heightInTiles; i++) {
+				for (var j:int = 0; j < widthInTiles; j++) {
 					mirkString += "0";
-					if (j - 1 < heightInTiles) {
+					if (j + 1 < widthInTiles) {
 						mirkString += ",";
 					} else {
-						mirkString += "\n";
+						if (i + 1 < heightInTiles) {
+							mirkString += "\n";
+						}
 					}
 				}
 			}
-			
 			tilesMirk = new FlxTilemap();
 			tilesMirk.loadMap(mirkString, mirkGraphic, tileWidth, tileHeight);
 			
@@ -153,17 +176,21 @@ package {
 				}
 			}
 			
-			
+			// Prepare the tilesExplored and tilesCurrVisible arrays, initializing each cell. Load explored data, if any.
 			tilesExplored = createGrid(widthInTiles, heightInTiles);
 			tilesCurrVisible = createGrid(widthInTiles, heightInTiles);
-			if (parent.saveGame.data.deck[ID] != null) {
+			tilesProcessed = createGrid(widthInTiles, heightInTiles);
+			if (parent.saveGame.data.deck != null && parent.saveGame.data.deck[ID] != null) {
 				// Load save game explored data, and set all CurrVisible to false (changes at update).
+				trace("No loading functionality yet for explored areas.")
 			} else {
 				// New game, nothing explored yet.
 				for (i = 0; i < widthInTiles; i++) {
 					for (j = 0; j < heightInTiles; j++) {
 						tilesExplored[i][j] = false;
+						// Also initialize the tilesCurrVisible array and tilesProcessed arry and save yourself some loops.
 						tilesCurrVisible[i][j] = false;
+						tilesProcessed[i][j] = false;
 					}
 				}
 			}
@@ -172,7 +199,7 @@ package {
 			// Load the lighting if there is any data to load. Can cause errors if the lighting data is too small.
 			if (lightingData != null) {
 				tilesLighting = createGrid(widthInTiles, heightInTiles);
-				var lightArray:Array = lightingData.split("\n");
+				var lightArray:Array = lightingData.split("/n");
 				for (i = 0; i < lightArray.length; i++) {
 					lightArray[i] = (String)(lightArray[i]).split(",");
 				}
@@ -181,6 +208,35 @@ package {
 						tilesLighting[i][j] = lightArray[j][i]; // Note that lightArray is flipped for tilesLighting.
 					}
 				}
+			}
+			
+			// When done...
+			initialized = true;
+		}
+		
+		/**
+		 * Adds the deck, if prepared, to the PlayState, with each part going to the correct layer.
+		 * @param state Which PlayState to add this deck to. You know. The only one.
+		 */
+		public function addToState(state:PlayState):void {
+			if (initialized && state != null) {
+				state.backgroundProcessingLyr.add(this);
+				state.deckExploredLyr.add(tilesMirk);
+				state.deckTileLyr.add(tilesMap);
+				state.deckSpriteLyr.add(sprites);
+			}
+		}
+		
+		/**
+		 * Removes a deck, if initialized, from the PlayState, removing each part from the correct layer.
+		 * @param	state Which PlayState to remove this deck from.
+		 */
+		public function removeFromState(state:PlayState):void {
+			if (initialized && state != null) {
+				state.backgroundProcessingLyr.remove(this, true);
+				state.deckExploredLyr.remove(tilesMirk, true);
+				state.deckTileLyr.remove(tilesMap, true);
+				state.deckSpriteLyr.remove(sprites, true);
 			}
 		}
 		
@@ -200,10 +256,152 @@ package {
 			return result;
 		}
 		
+		/**
+		 * Update cycle.
+		 */
 		override public function update():void {
 			super.update();
 			if (tilesLighting != null) {
 				// Do lighting calculation here.
+			}
+			updateLineOfSight();
+			updateMirk();
+		}
+		
+		/**
+		 * Line of sight calculation. This must be done before updating tilesMirk.
+		 */
+		public function updateLineOfSight():void {
+			var playerCenter:FlxPoint = parent.player.getMidpoint();
+			
+			// Clear visibility and processed.
+			for (var i:int = 0; i < widthInTiles; i++) {
+				for (var j:int = 0; j < heightInTiles; j++) {
+					tilesCurrVisible[i][j] = false;
+					tilesProcessed[i][j] = false;
+				}
+			}
+			
+			// Then run rays from the player to each tile along the outside edge of the TileMap.
+			// Need to change this to a series of points outside the edge of the screen.
+			var point:FlxPoint = new FlxPoint();
+			for (i = 0; i < FlxG.width / (tileWidth * 0.8); i++) {
+				// top side
+				point.x = FlxG.camera.scroll.x + (i * tileWidth * 0.8);
+				point.y = FlxG.camera.scroll.y;
+				lineOfSightRay(playerCenter, point);
+				// bottom side
+				point.y = FlxG.camera.scroll.y + FlxG.height;
+				lineOfSightRay(playerCenter, point);
+			}
+			for (i = 0; i < FlxG.height / (tileHeight * 0.8); i++) {
+				// left side
+				point.x = FlxG.camera.scroll.x;
+				point.y = FlxG.camera.scroll.y + (i * tileHeight * 0.8);
+				lineOfSightRay(playerCenter, point);
+				// right side
+				point.x = FlxG.camera.scroll.x + FlxG.width;
+				lineOfSightRay(playerCenter, point);
+			}
+		}
+		
+		/**
+		 * Individual ray from the player to one of the edge blocks of a tilemap. Processes through tiles along the path and checks if
+		 * they're opaque. Stops when it runs into an opaque block.
+		 * @param	start
+		 * @param	end
+		 */
+		private function lineOfSightRay(start:FlxPoint, end:FlxPoint):void {
+			var dX:Number = end.x - start.x;
+			var dY:Number = end.y - start.y;
+			var c:Number = Math.sqrt(dX * dX + dY * dY); // length of line segment
+			var stepLength:Number = (tileWidth + tileHeight) / 3;
+			var numSteps:uint = (uint)(c / stepLength) + 1;
+			var startP:Point = new Point(start.x, start.y);
+			var endP:Point = new Point(end.x, end.y);
+			var goOn:Boolean = true;
+			var i:int = 0;
+			while (goOn && i < numSteps) {
+				var point:Point = Point.interpolate(endP, startP, (i * stepLength) / c);
+				goOn = checkTile(point.x, point.y, dX, dY);
+				i++;
+			}
+			
+			
+		}
+		
+		/**
+		 * Check an individual tile - if it exists, then if it's been processed, then if it's opaque. If it's !opague,
+		 * check all the adjacent tiles for opaque.
+		 * @param	X
+		 * @param	Y
+		 * @param   dX
+		 * @param   dY
+		 * @return
+		 */
+		private function checkTile(X:Number, Y:Number, dX:Number, dY:Number):Boolean {
+			var slotX:int = (int)((X - x) / tileWidth);
+			var slotY:int = (int)((Y - y) / tileHeight);
+			if (slotX >= 0 && slotX < widthInTiles && slotY >= 0 && slotY < heightInTiles) { // Tile must exist
+				var opaque:Boolean = tilesOpacity[slotX][slotY];
+				var processed:Boolean = tilesProcessed[slotX][slotY];
+				if (opaque) { // Make adjacent opaque tiles visible, depending on the ray's angle.
+					if (dX <= 0 && dY <= 0) checkAdjacent(slotX - 1, slotY - 1);
+					if (dY <= 0) checkAdjacent(slotX, slotY - 1);
+					if (dX > 0 && dY <= 0) checkAdjacent(slotX + 1, slotY - 1);
+					if (dX <= 0) checkAdjacent(slotX - 1, slotY);
+					if (dX > 0) checkAdjacent(slotX + 1, slotY);
+					if (dX <= 0 && dY > 0) checkAdjacent(slotX - 1, slotY + 1);
+					if (dY > 0) checkAdjacent(slotX, slotY + 1);
+					if (dX > 0 && dY > 0) checkAdjacent(slotX + 1, slotY + 1);
+				}
+				if (processed) { // already been processed, next spot.
+					if (opaque) {
+						return false;
+					} else {
+						return true;
+					}
+				} else { // Not processed yet.
+					tilesProcessed[slotX][slotY] = true;
+					if (opaque) {
+						return false;
+					} else {
+						tilesCurrVisible[slotX][slotY] = true;
+						if (!tilesExplored[slotX][slotY]) { tilesExplored[slotX][slotY] = true; }
+						return true;
+					}
+				}
+			}
+			return true;
+		}
+		
+		/**
+		 * Check a tile adjacent to a !opaque tile to see if it's opaque. If opaque, set visibleToPlayer.
+		 * @param	slotX
+		 * @param	slotY
+		 */
+		private function checkAdjacent(slotX:int, slotY:int):void {
+			if (slotX >= 0 && slotX < widthInTiles && slotY >= 0 && slotY < heightInTiles) { // Tile must exist
+				if (tilesOpacity[slotX][slotY] && !tilesCurrVisible[slotX][slotY]) {
+					tilesCurrVisible[slotX][slotY] = true;
+					if (!tilesExplored[slotX][slotY]) { tilesExplored[slotX][slotY] = true; }
+				}
+			}
+		}
+		
+		private function updateMirk():void {
+			for (var i:int = 0; i < widthInTiles; i++) {
+				for (var j:int = 0; j < heightInTiles; j++) {
+					if (tilesCurrVisible[i][j]) {
+						tilesMirk.setTile(i, j, 3);
+					} else {
+						if (tilesExplored[i][j]) {
+							tilesMirk.setTile(i, j, 5);
+						} else {
+							tilesMirk.setTile(i, j, 9);
+						}
+					}
+				}
 			}
 		}
 		
