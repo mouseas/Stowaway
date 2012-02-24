@@ -303,6 +303,9 @@ package {
 					tilesProcessed[i][j] = false;
 				}
 			}
+			if (!tilesMap.onScreen()) {
+				return; // No need to calculate for off-screen Decks
+			}
 			
 			// Then run rays from the player to each tile along the outside edge of the TileMap.
 			// Need to change this to a series of points outside the edge of the screen.
@@ -310,12 +313,12 @@ package {
 			for (i = 0; i < FlxG.width / (tileWidth * 0.8); i++) {
 				point.x = FlxG.camera.scroll.x + (i * tileWidth * 0.8);
 				// top side
-				if (parent.player.y < y + height + (FlxG.height / 2)) { // These if statements reduce useless lineOfSight rays.
+				if (parent.player.y >= y) { // These if statements reduce useless lineOfSight rays.
 					point.y = FlxG.camera.scroll.y;
 					lineOfSightRay(playerCenter, point);
 				}
 				// bottom side
-				if (parent.player.y > y - (FlxG.height / 2)) {
+				if (parent.player.y <= y + height) {
 					point.y = FlxG.camera.scroll.y + FlxG.height;
 					lineOfSightRay(playerCenter, point);
 				}
@@ -323,12 +326,12 @@ package {
 			for (i = 0; i < FlxG.height / (tileHeight * 0.8); i++) {
 				point.y = FlxG.camera.scroll.y + (i * tileHeight * 0.8);
 				// left side
-				if (parent.player.x < x + width + (FlxG.width / 2)) {
+				if (parent.player.x >= x) {
 					point.x = FlxG.camera.scroll.x;
 					lineOfSightRay(playerCenter, point);
 				}
 				// right side
-				if (parent.player.x > x - (FlxG.width / 2)) {
+				if (parent.player.x <= x + width) {
 					point.x = FlxG.camera.scroll.x + FlxG.width;
 					lineOfSightRay(playerCenter, point);
 				}

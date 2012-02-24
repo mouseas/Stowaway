@@ -163,6 +163,7 @@ package {
 		}
 		
 		override public function update():void {
+			numRays = 0;
 			super.update();
 			FlxG.collide(player, deckTileLyr);
 			
