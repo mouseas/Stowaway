@@ -8,6 +8,11 @@ package {
 		[Embed(source = "../lib/mirk.png")]public var mirkGraphic:Class;
 		
 		/**
+		 * Whichever deck is the current one.
+		 */
+		public static var currentDeck:Deck;
+		
+		/**
 		 * How many pixels wide each tile is.
 		 */
 		public var tileWidth:uint;
@@ -16,6 +21,16 @@ package {
 		 * How many pixels tall each tile is.
 		 */
 		public var tileHeight:uint;
+		
+		/**
+		 * Width in pixels of the Deck.
+		 */
+		public var width:Number;
+		
+		/**
+		 * Height in pixels of the Deck.
+		 */
+		public var height:Number;
 		
 		/**
 		 * 2D Array of each tiles' opacity; whether each tile can be seen through. Used for line-of-sight calculations.
@@ -143,6 +158,8 @@ package {
 			
 			widthInTiles = tilesMap.widthInTiles;
 			heightInTiles = tilesMap.heightInTiles;
+			width = tilesMap.width;
+			height = tilesMap.height;
 			tileWidth = (int)(tilesMap.width / tilesMap.widthInTiles);
 			tileHeight = (int)(tilesMap.height / tilesMap.heightInTiles);
 			opacityIndex = OpaqueIndex;
@@ -264,6 +281,11 @@ package {
 			if (tilesLighting != null) {
 				// Do lighting calculation here.
 			}
+			if (currentDeck != this) {
+				if (parent.player.x >= x && parent.player.x <= x + width && parent.player.y >= y && parent.player.y <= y + height) {
+					currentDeck = this;
+				}
+			}
 			updateLineOfSight();
 			updateMirk();
 		}
@@ -286,22 +308,30 @@ package {
 			// Need to change this to a series of points outside the edge of the screen.
 			var point:FlxPoint = new FlxPoint();
 			for (i = 0; i < FlxG.width / (tileWidth * 0.8); i++) {
-				// top side
 				point.x = FlxG.camera.scroll.x + (i * tileWidth * 0.8);
-				point.y = FlxG.camera.scroll.y;
-				lineOfSightRay(playerCenter, point);
+				// top side
+				if (parent.player.y < y + height + (FlxG.height / 2)) { // These if statements reduce useless lineOfSight rays.
+					point.y = FlxG.camera.scroll.y;
+					lineOfSightRay(playerCenter, point);
+				}
 				// bottom side
-				point.y = FlxG.camera.scroll.y + FlxG.height;
-				lineOfSightRay(playerCenter, point);
+				if (parent.player.y > y - (FlxG.height / 2)) {
+					point.y = FlxG.camera.scroll.y + FlxG.height;
+					lineOfSightRay(playerCenter, point);
+				}
 			}
 			for (i = 0; i < FlxG.height / (tileHeight * 0.8); i++) {
-				// left side
-				point.x = FlxG.camera.scroll.x;
 				point.y = FlxG.camera.scroll.y + (i * tileHeight * 0.8);
-				lineOfSightRay(playerCenter, point);
+				// left side
+				if (parent.player.x < x + width + (FlxG.width / 2)) {
+					point.x = FlxG.camera.scroll.x;
+					lineOfSightRay(playerCenter, point);
+				}
 				// right side
-				point.x = FlxG.camera.scroll.x + FlxG.width;
-				lineOfSightRay(playerCenter, point);
+				if (parent.player.x > x - (FlxG.width / 2)) {
+					point.x = FlxG.camera.scroll.x + FlxG.width;
+					lineOfSightRay(playerCenter, point);
+				}
 			}
 		}
 		
@@ -312,6 +342,14 @@ package {
 		 * @param	end
 		 */
 		private function lineOfSightRay(start:FlxPoint, end:FlxPoint):void {
+			if (currentDeck != null && currentDeck != this) {
+				if (!currentDeck.tilesMap.ray(start, end)) {
+					return;
+					// Kill line of sight rays from the current deck into this one if there's an obstacle.
+					// This is a lazy measure - it calculates based on whether a block is solid rather than
+					// if it is opaque, so transparent walls and opaque floor blocks will not work right.
+				}
+			}
 			var dX:Number = end.x - start.x;
 			var dY:Number = end.y - start.y;
 			var c:Number = Math.sqrt(dX * dX + dY * dY); // length of line segment

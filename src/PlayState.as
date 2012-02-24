@@ -136,10 +136,12 @@ package {
 			
 			testDeck = new Deck(0, this);
 			testDeck.loadDeck(new testmapData(), tileGraphics, null, 0, 0, 1, 1);
+			testDeck.addToState(this);
 			
 			testDeck2 = new Deck(1, this);
 			testDeck2.loadDeck(new testmapData2(), tileGraphics, null, 0, 0, 1, 1);
 			testDeck2.y = 224;
+			testDeck2.addToState(this);
 			
 			if (saveGame.data.player == null) {
 				player = new Player(26, 26);
@@ -168,35 +170,21 @@ package {
 			debug2.text = "" + Math.round(player.y);
 			
 			if (!init) {
-				testDeck.addToState(this);
-				testDeck2.addToState(this);
-				FlxG.camera.follow(player);
+				// Initalization stuff that has to wait until an update cycle.
 				init = true;
 				FlxG.worldBounds.x = -1000;
 				FlxG.worldBounds.y = -1000;
 				FlxG.worldBounds.width = 5000;
 				FlxG.worldBounds.height = 5000;
-				
+				FlxG.camera.follow(player);				
 			}
+			
+			// debug keystrokes
 			if (FlxG.keys.justPressed("O")) { //save game
 				saveGame.data.player = player;
 				player.flicker(0.25);
 			}
-			if (FlxG.keys.justPressed("P")) {
-				player.y = 26;
-			}
 			
-			//Deal with visibility
-			/*var tiles:Array = tilemap.tileObjects;
-			for (var i:int = 0; i < tiles.length; i++) {
-				var tile:FlxTile = tiles[i];
-				if (tilemap.ray(player.getMidpoint(), tile.getMidpoint())) {
-					tile.visible = false;
-					trace(i);
-				} else {
-					tile.visible = true;
-				}
-			}*/
 		}
 		
 		
