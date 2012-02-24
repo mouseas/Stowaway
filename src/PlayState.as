@@ -15,6 +15,7 @@ package {
 		// ####################### Graphic and map data files #####################
 		
 		[Embed(source = "../lib/tilemaps/testmap.csv", mimeType = "application/octet-stream")] public var testmapData:Class;
+		[Embed(source = "../lib/tilemaps/testmap2.csv", mimeType = "application/octet-stream")] public var testmapData2:Class;
 		[Embed(source = "../lib/placeholder-tiles.png")] public var tileGraphics:Class;
 		
 		// ####################### Visual Layers ########################
@@ -84,6 +85,7 @@ package {
 		
 		public var tilemap:TileMap;
 		public var testDeck:Deck;
+		public var testDeck2:Deck;
 		
 		public var soundManager:SoundManager;
 		
@@ -135,6 +137,10 @@ package {
 			testDeck = new Deck(0, this);
 			testDeck.loadDeck(new testmapData(), tileGraphics, null, 0, 0, 1, 1);
 			
+			testDeck2 = new Deck(1, this);
+			testDeck2.loadDeck(new testmapData2(), tileGraphics, null, 0, 0, 1, 1);
+			testDeck2.y = 224;
+			
 			if (saveGame.data.player == null) {
 				player = new Player(26, 26);
 			} else {
@@ -156,10 +162,14 @@ package {
 		
 		override public function update():void {
 			super.update();
-			//debug1.text = "" + Math.round(FlxG.camera.scroll.x);
-			//debug2.text = "" + Math.round(FlxG.camera.scroll.y);
+			FlxG.collide(player, deckTileLyr);
+			
+			debug1.text = "" + Math.round(player.x);
+			debug2.text = "" + Math.round(player.y);
+			
 			if (!init) {
 				testDeck.addToState(this);
+				testDeck2.addToState(this);
 				FlxG.camera.follow(player);
 				init = true;
 				FlxG.worldBounds.x = -1000;
@@ -172,7 +182,9 @@ package {
 				saveGame.data.player = player;
 				player.flicker(0.25);
 			}
-			FlxG.collide(player, deckTileLyr);
+			if (FlxG.keys.justPressed("P")) {
+				player.y = 26;
+			}
 			
 			//Deal with visibility
 			/*var tiles:Array = tilemap.tileObjects;

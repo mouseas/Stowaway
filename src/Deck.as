@@ -345,7 +345,7 @@ package {
 			if (slotX >= 0 && slotX < widthInTiles && slotY >= 0 && slotY < heightInTiles) { // Tile must exist
 				var opaque:Boolean = tilesOpacity[slotX][slotY];
 				var processed:Boolean = tilesProcessed[slotX][slotY];
-				if (opaque) { // Make adjacent opaque tiles visible, depending on the ray's angle.
+				if (!opaque) { // Make adjacent opaque tiles visible, depending on the ray's angle.
 					if (dX <= 0 && dY <= 0) checkAdjacent(slotX - 1, slotY - 1);
 					if (dY <= 0) checkAdjacent(slotX, slotY - 1);
 					if (dX > 0 && dY <= 0) checkAdjacent(slotX + 1, slotY - 1);
@@ -392,13 +392,22 @@ package {
 		private function updateMirk():void {
 			for (var i:int = 0; i < widthInTiles; i++) {
 				for (var j:int = 0; j < heightInTiles; j++) {
+					var k:uint = tilesMirk.getTile(i, j)
 					if (tilesCurrVisible[i][j]) {
-						tilesMirk.setTile(i, j, 3);
+						if (k > 0) {
+							tilesMirk.setTile(i, j, k - 1);
+						}
 					} else {
 						if (tilesExplored[i][j]) {
-							tilesMirk.setTile(i, j, 5);
+							if (k < 5) {
+								tilesMirk.setTile(i, j, k + 1);
+							} else if (k > 5) {
+								tilesMirk.setTile(i, j, k - 1);
+							}
 						} else {
-							tilesMirk.setTile(i, j, 9);
+							if (k < 10) {
+								tilesMirk.setTile(i, j, k + 1);
+							}
 						}
 					}
 				}
