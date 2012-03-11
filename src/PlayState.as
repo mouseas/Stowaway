@@ -85,7 +85,7 @@ package {
 		
 		public var tilemap:TileMap;
 		public var testDeck:Deck;
-		public var testDeck2:Deck;
+		public var testDeck1:Deck;
 		
 		public var soundManager:SoundManager;
 		
@@ -136,12 +136,26 @@ package {
 			
 			testDeck = new Deck(0, this);
 			testDeck.loadDeck(new testmapData(), tileGraphics, null, 0, 0, 1, 1);
+			if (saveGame.data.deck0 != null) {
+				for (var i:int = 0; i < testDeck.widthInTiles; i++) {
+					for (var j:int = 0; j < testDeck.heightInTiles; j++) {
+						testDeck.tilesExplored[i][j] = saveGame.data.deck0.tilesExplored[i][j];
+					}
+				}
+			}
 			testDeck.addToState(this);
 			
-			testDeck2 = new Deck(1, this);
-			testDeck2.loadDeck(new testmapData2(), tileGraphics, null, 0, 0, 1, 1);
-			testDeck2.y = 224;
-			testDeck2.addToState(this);
+			testDeck1 = new Deck(1, this);
+			testDeck1.loadDeck(new testmapData2(), tileGraphics, null, 0, 0, 1, 1);
+			testDeck1.y = 224;
+			if (saveGame.data.deck0 != null) {
+				for (i = 0; i < testDeck1.widthInTiles; i++) {
+					for (j = 0; j < testDeck1.heightInTiles; j++) {
+						testDeck1.tilesExplored[i][j] = saveGame.data.deck1.tilesExplored[i][j];
+					}
+				}
+			}
+			testDeck1.addToState(this);
 			
 			if (saveGame.data.player == null) {
 				player = new Player(26, 26);
@@ -181,10 +195,29 @@ package {
 			
 			// debug keystrokes
 			if (FlxG.keys.justPressed("O")) { //save game
-				saveGame.data.player = player;
-				player.flicker(0.25);
+				saveCurrentGame();
+			}
+			if (FlxG.keys.justPressed("P")) { // delete saved data
+				deleteSavedGame();
 			}
 			
+		}
+		
+		private function saveCurrentGame():void {
+			saveGame.data.player = player;
+			
+			saveGame.data.deck0 = testDeck;
+			saveGame.data.deck1 = testDeck1;
+			
+			player.flicker(0.25);
+		}
+		
+		private function deleteSavedGame():void {
+			saveGame.data.player = null;
+			saveGame.data.deck0 = null;
+			saveGame.data.deck1 = null;
+			
+			player.flicker(0.25);
 		}
 		
 		
