@@ -12,7 +12,7 @@ package
 		 * Starts the program, opens an instance of PlayState.
 		 */
 		public function Main():void {
-			super(320, 240, PlayState, 2);
+			super(320, 240, MainMenuState, 2);
 		}
 		
 	}

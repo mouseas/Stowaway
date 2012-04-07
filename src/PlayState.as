@@ -83,7 +83,6 @@ package {
 		public var debug1:FlxText;
 		public var debug2:FlxText;
 		
-		public var tilemap:TileMap;
 		public var testDeck:Deck;
 		public var testDeck1:Deck;
 		
@@ -96,8 +95,10 @@ package {
 		/**
 		 * Constructor function.
 		 */
-		public function PlayState():void {
+		public function PlayState(loadGame:Boolean = true):void {
 			init = false;
+			
+			FlxG.mouse.hide();
 			
 			// First thing's first, load / create the save object.
 			saveGame = new FlxSave();
@@ -127,16 +128,12 @@ package {
 			backgroundProcessingLyr = new FlxGroup();
 			add(backgroundProcessingLyr);
 			
-			// And other stuff...
+			// Create all the decks. Add them to the game.
 			
-			//tilemap = new TileMap(0, 0);
-			//tilemap.loadMap(new testmapData(), tileGraphics, 16, 16, 0, 1, 1);
-			//add(tilemap);
-			//tilemap.gameActive = true;
 			
 			testDeck = new Deck(0, this);
 			testDeck.loadDeck(new testmapData(), tileGraphics, null, 0, 0, 1, 1);
-			if (saveGame.data.deck0 != null) {
+			if (loadGame && saveGame.data.deck0 != null) {
 				for (var i:int = 0; i < testDeck.widthInTiles; i++) {
 					for (var j:int = 0; j < testDeck.heightInTiles; j++) {
 						testDeck.tilesExplored[i][j] = saveGame.data.deck0.tilesExplored[i][j];
@@ -145,22 +142,28 @@ package {
 			}
 			testDeck.addToState(this);
 			
+			var pirate:Pirate = new Pirate(0);
+			pirate.x = 203;
+			pirate.y = 116;
+			deckSpriteLyr.add(pirate);
+			
 			testDeck1 = new Deck(1, this);
 			testDeck1.loadDeck(new testmapData2(), tileGraphics, null, 0, 0, 1, 1);
 			testDeck1.y = 224;
-			if (saveGame.data.deck0 != null) {
-				for (i = 0; i < testDeck1.widthInTiles; i++) {
+			if (loadGame && saveGame.data.deck0 != null) {
+				testDeck1.tilesExplored = saveGame.data.deck1.tilesExplored;
+				/*for (i = 0; i < testDeck1.widthInTiles; i++) {
 					for (j = 0; j < testDeck1.heightInTiles; j++) {
 						testDeck1.tilesExplored[i][j] = saveGame.data.deck1.tilesExplored[i][j];
 					}
-				}
+				}*/
 			}
 			testDeck1.addToState(this);
 			
-			if (saveGame.data.player == null) {
-				player = new Player(26, 26);
-			} else {
+			if (loadGame && saveGame.data.player != null) {
 				player = new Player(saveGame.data.player.x, saveGame.data.player.y);
+			} else {
+				player = new Player(26, 26);
 			}
 			playerLyr.add(player);
 			
